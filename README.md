@@ -1,0 +1,2 @@
+# cmem
+Cluster membership service
