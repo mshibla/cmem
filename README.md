@@ -24,12 +24,12 @@ that used in the cluster join message.
 The last element of a CMem protocol message is the message data.  This can be one of several
 messages:
 
-- *cjoin <identifier>*: indicates an intent to participate in the cluster, includes the name
+- *cjoin &lt;identifier&gt;*: indicates an intent to participate in the cluster, includes the name
 identifier used by the joining member
-- *alive <identifier> <time>*: indicates that the sending member is alive and participating in the
+- *alive &lt;identifier&gt; &lt;time&gt;*: indicates that the sending member is alive and participating in the
 cluster; the time parameter is seconds from UTC epoch
-- *leave <identifier>*: indicates that the member is leaving the cluster
-- *cluster <cluster_membership_list>*: when a new cluster member joins, existing cluster members
+- *leave &lt;identifier&gt;*: indicates that the member is leaving the cluster
+- *cluster &lt;cluster_membership_list&gt;*: when a new cluster member joins, existing cluster members
 reply with their current cluster membership list (this allows the joining member to know who is
 participating in the cluster, even though the joiner wasn't present for the previous join
 messages); note that disagreements in cluster membership need to be rectified, but this is
