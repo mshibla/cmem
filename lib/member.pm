@@ -2,20 +2,23 @@ package member;
 
 use Moose;
 use namespace::autoclean;
-use IO::Socket::INET;
-use IO::Socket::Multicast;
 use overload
  '""' => sub { $_[0]->name() . '[' . $_[0]->ip()->addr() . ']' },
 ;
 
-has 'name' => (
+has 'name'      => (
   is  => 'rw',
   isa => 'Str',
 );
 
-has 'ip' => (
+has 'ip'        => (
   is  => 'rw',
   isa => 'ip_addr',
+);
+
+has 'heartbeat' => (
+  is  => 'rw',
+  isa => 'Int',
 );
 
 
