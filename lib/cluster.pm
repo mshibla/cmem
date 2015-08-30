@@ -91,7 +91,7 @@ sub join {
   my $send_s = IO::Socket::Multicast->new(
     Proto     => $self->proto(),
     ReuseAddr => 1,
-    PeerAddr => $dest . ':' . $self->port(),
+    PeerAddr  => $dest . ':' . $self->port(),
   );
 
   $self->send_sock($send_s);

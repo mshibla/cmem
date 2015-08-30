@@ -22,7 +22,7 @@ use cluster;
     'name' => 'b',
     'ip'   => $ip2,
   );  
-	my $cluster     = cluster->new(
+  my $cluster     = cluster->new(
     'members' => [$m1, $m2],
     'address' => $mcast_group,
     'port'    => $mcast_port,
