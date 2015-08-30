@@ -26,7 +26,8 @@ sub setup {
 
 
 {
-  my $timeout      = 1; # second
+  my $timeout      = 10; # seconds
+  my $interval     = 60; # seconds
   my $mcast_group  = ip_addr->new('addr' => '238.1.1.5');
   my $mcast_port   = 51510;
   my $listen_port  = 51511;
@@ -70,6 +71,8 @@ sub setup {
 
   # main loop until shutdown
 
+  my $start        = DateTime->now()->epoch();
+
   LOOP:
   while (1) {
     my @ready      = $sel->can_read($timeout);
@@ -102,7 +105,12 @@ sub setup {
       }
     }
 
-    $cluster->heartbeat();
+    my $now        = DateTime->now()->epoch();
+
+    if ($now - $interval > $start) {
+      $cluster->heartbeat();
+      $start       = $now;
+    }
   }
 
   $cluster->leave();
