@@ -55,6 +55,11 @@ has 'members'   => (
   auto_deref => 1,
 );
 
+has 'me'        => (
+  is         => 'rw',
+  isa        => 'member',
+);
+
 has 'send_sock' => (
   is         => 'rw',
   isa        => 'IO::Socket',
@@ -87,7 +92,7 @@ has 'timeout'   => (
 has 'version'   => (
   is         => 'ro',
   isa        => 'Str',
-  default    => '0.0.1-ALPHA',
+  default    => '0.1.0-ALPHA',
 );
 
 
@@ -101,40 +106,49 @@ sub cjoin {
   (defined($member))
     || die("Must specify member object to join cluster.\n");
 
-  my $ip           = $member->ip();
+  my $ip          = $member->ip();
 
   $self->iface($ip);
 
-  # create read socket
+  # we might pass through this routine more than once, e.g. if there's high load w/ renice
 
-  my $recv_s       = IO::Socket::Multicast->new(
-    Proto     => $self->proto(),
-    ReuseAddr => 1,
-    LocalPort => $self->port(),
-  );
+  if (!($self->recv_sock())) {
+    # create read socket
 
-  my $dest         = $self->address()->addr();
+    my $recv_s    = IO::Socket::Multicast->new(
+      Proto     => $self->proto(),
+      ReuseAddr => 1,
+      LocalPort => $self->port(),
+    );
 
-  $recv_s->mcast_add($dest)
-    || die("Cannot join multicast group '$dest'\n");
+    my $dest      = $self->address()->addr();
 
-  $self->recv_sock($recv_s);
+    $recv_s->mcast_add($dest)
+      || die("Cannot join multicast group '$dest'\n");
 
-  # create selector and add read socket
+    $self->recv_sock($recv_s);
 
-  my $sel         = IO::Select->new();
-  $sel->add($recv_s);
-  $self->selector($sel);
+    if (!($self->selector())) {
+      # create selector and add read socket
 
-  # create write socket
+      my $sel     = IO::Select->new();
+      $sel->add($recv_s);
+      $self->selector($sel);
+    }
+  }
 
-  my $send_s      = IO::Socket::Multicast->new(
-    Proto     => $self->proto(),
-    ReuseAddr => 1,
-    PeerAddr  => $dest . ':' . $self->port(),
-  );
+  if (!($self->send_sock())) {
+    # create write socket
 
-  $self->send_sock($send_s);
+    my $dest      = $self->address()->addr();
+    my $send_s    = IO::Socket::Multicast->new(
+      Proto     => $self->proto(),
+      ReuseAddr => 1,
+      PeerAddr  => $dest . ':' . $self->port(),
+    );
+
+    $self->send_sock($send_s);
+  }
 
   my $msg         = "join " . $self->iface()->addr();
 
@@ -177,6 +191,42 @@ sub announce {
     || die("Cannnot send message '$message' to group: $!\n");
 
   return(0);
+}
+
+
+sub remove_member {
+  my $self        = shift;
+  my $member      = shift;
+  my @members     = $self->members();
+  my @new         = grep { $_->ip()->addr() ne $member } @members;
+  
+  $self->members(\@new);
+}
+
+
+sub check_heartbeats {
+  my $self        = shift;
+  my $timeout     = $self->timeout();
+  my $timer       = DateTime->now()->epoch();
+  my @members     = $self->members();
+
+  MEMBER:
+  foreach my $member (@members) {
+    my $elapsed   = $timer - $member->heartbeat();
+    if ($elapsed > $timeout) {
+      # stale heartbeat, remove cluster member
+      warn("Member '$member' has stale heartbeat: '$elapsed' > '$timeout'.\n");
+      my $addr    = $member->ip()->addr();
+      if ($self->me()->ip()->addr() eq $addr) {
+        # need to rejoin cluster, something happened and I've timed out
+        my $m1    = $self->me();
+        $m1->heartbeat($timer);
+        $self->cjoin($m1);
+      } else {
+        $self->remove_member($member->ip()->addr());
+      }
+    }
+  }
 }
 
 
@@ -264,7 +314,7 @@ sub parse {
         my $m     = member->new(
           'name'      => $joiner,
           'ip'        => $addr,
-          'heartbeat' => gmtime(),
+          'heartbeat' => DateTime->now->epoch(),
         );
         push(@members, $m);
         $self->members(\@members);
@@ -294,9 +344,7 @@ sub parse {
     
     m/^leave (\S+)$/      && do {
       my $member   = $1;
-      my @members  = $self->members();
-      my @new      = grep { $_->ip()->addr() ne $member } @members;
-      $self->members(\@new);
+      $self->remove_member($member);
       last MESG;
     };
     

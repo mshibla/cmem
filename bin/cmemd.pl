@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use diagnostics;
 use DateTime;
+use Proc::Daemon;
 use lib '../lib';
 use ip_addr;
 use member;
@@ -32,6 +33,11 @@ sub setup {
   my $mcast_port   = 51510;
   my $listen_port  = 51511;
 
+  # daemonize
+
+  # need to add logging and other concerns before implmenting daemonization
+  # Proc::Daemon::Init();
+
   # IP addresses are checked for IPv4-ness via ip_addr class
 
   my $ip1          = ip_addr->new('addr' => '192.168.0.9');
@@ -48,6 +54,7 @@ sub setup {
 
   my $cluster      = cluster->new(
     'members'   => [$m1],
+    'me'        => $m1,
     'address'   => $mcast_group,
     'port'      => $mcast_port,
   );
@@ -104,6 +111,12 @@ sub setup {
         $cluster->receive($cluster->recv_sock());
       }
     }
+
+    # check cluster members for timely heartbeats
+
+    $cluster->check_heartbeats();
+
+    # send heartbeat, if necessary
 
     my $now        = DateTime->now()->epoch();
 

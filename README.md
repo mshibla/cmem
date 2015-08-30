@@ -32,3 +32,13 @@ reply with their current cluster membership list (this allows the joining member
 participating in the cluster, even though the joiner wasn't present for the previous join
 messages); note that disagreements in cluster membership need to be rectified, but this is
 done in the implementation of the cluster, not in the cluster protocol
+
+## Notes ##
+
+* Needs logging methodology
+
+* Needs cluster auth
+
+* Needs to handle signals
+
+* Enable daemonization
