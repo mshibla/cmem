@@ -84,6 +84,11 @@ has 'timeout'   => (
   default    => 300,
 );
 
+has 'version'   => (
+  is         => 'ro',
+  isa        => 'Str',
+  default    => '0.0.1-ALPHA',
+);
 
 
 sub cjoin {

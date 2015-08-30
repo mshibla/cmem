@@ -86,6 +86,7 @@ sub setup {
 
         MEMBER:
         foreach my $member (@membs) {
+          # the joys of overloading quote operators
           $client->send("$member\n");
         }
 

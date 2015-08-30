@@ -1,7 +1,5 @@
 # cmem
-Cluster membership service
-
-Disclaimer: This service is not yet functional.
+Cluster membership service, v0.0.1-ALPHA
 
 This project implements a cluster membership service written in perl.  Moose is used heavily.
 The agent is implemented as cmembd.pl.  On startup, cmemd.pl joins the multicast group for reading
