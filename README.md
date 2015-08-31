@@ -37,8 +37,11 @@ done in the implementation of the cluster, not in the cluster protocol
 
 * Needs logging methodology
 
-* Needs cluster auth
+* Needs cluster security, including auth
 
 * Needs to handle signals
 
 * Enable daemonization
+
+* Handle split-brain scenarios
+
